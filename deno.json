@@ -1,0 +1,10 @@
+{
+  "tasks": {
+    "dev": "deno run --watch --allow-net --allow-env --allow-read src/index.ts"
+  },
+  "imports": {
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.0",
+    "discord.js": "npm:discord.js@^14.25.1",
+    "openai": "npm:openai@^6.17.0"
+  }
+}
