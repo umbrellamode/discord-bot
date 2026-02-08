@@ -12,6 +12,12 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
   ],
 });
+
+// Minimal HTTP server so platforms with health checks stay green.
+const portEnv = Deno.env.get("PORT");
+const port = portEnv ? Number(portEnv) : undefined;
+Deno.serve(port ? { port } : {}, () => new Response("OK"));
+
 client.once(Events.ClientReady, (c) => {
   console.log(`Ready! Logged in as ${c.user.tag}`);
 });
@@ -22,4 +28,9 @@ client.on(Events.MessageCreate, async (message) => {
   const reversed = message.content.split("").reverse().join("");
   await message.reply(reversed);
 });
-client.login(Deno.env.get("DISCORD_TOKEN"));
+const token = Deno.env.get("DISCORD_TOKEN");
+if (!token) {
+  console.error("DISCORD_TOKEN is not set.");
+} else {
+  client.login(token);
+}
