@@ -5,6 +5,7 @@ try {
   // Running in production without .env file
 }
 import { Client, GatewayIntentBits, Events } from "discord.js";
+import { commands } from "./commands/mod.ts";
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -29,9 +30,11 @@ client.on(Events.MessageCreate, async (message) => {
     `[message] ${message.author.tag} in #${message.channel?.id ?? "unknown"}: ${message.content}`,
   );
 
-  if (message.content.trim() === "/hello") {
-    await message.reply("hi");
-    return;
+  for (const command of commands) {
+    if (command.matches(message)) {
+      await command.execute(message);
+      return;
+    }
   }
 
   const reversed = message.content.split("").reverse().join("");
