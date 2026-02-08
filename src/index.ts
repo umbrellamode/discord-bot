@@ -25,6 +25,15 @@ client.on(Events.MessageCreate, async (message) => {
   if (message.author.bot) return;
   if (!message.content) return;
 
+  console.log(
+    `[message] ${message.author.tag} in #${message.channel?.id ?? "unknown"}: ${message.content}`,
+  );
+
+  if (message.content.trim() === "/hello") {
+    await message.reply("hi");
+    return;
+  }
+
   const reversed = message.content.split("").reverse().join("");
   await message.reply(reversed);
 });
