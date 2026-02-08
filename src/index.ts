@@ -22,13 +22,22 @@ const client = new Client({
   partials: [Partials.Channel],
 });
 
-const ingestChannelId = Deno.env.get("INGEST_CHANNEL_ID");
-
-async function sendToDiscord(content: string, channelId: string): Promise<void> {
+async function sendToChannel(content: string, channelId: string): Promise<void> {
   if (!client.isReady()) return;
   const channel = await client.channels.fetch(channelId).catch(() => null);
   if (!channel || !channel.isTextBased()) return;
   await (channel as TextBasedChannel).send(content);
+}
+
+async function broadcastToGuildChannels(content: string): Promise<void> {
+  if (!client.isReady()) return;
+  for (const guild of client.guilds.cache.values()) {
+    const channels = await guild.channels.fetch();
+    for (const channel of channels.values()) {
+      if (!channel || !channel.isTextBased()) continue;
+      await (channel as TextBasedChannel).send(content);
+    }
+  }
 }
 
 async function parseWebSocketMessage(
@@ -81,10 +90,14 @@ Deno.serve(port ? { port } : {}, (req) => {
       const payload = await parseWebSocketMessage(event.data);
       console.log("[ws] message", payload);
 
-      const targetChannelId = payload.channelId ?? ingestChannelId;
-      if (targetChannelId && payload.content.trim().length > 0) {
-        void sendToDiscord(payload.content, targetChannelId);
+      if (payload.content.trim().length === 0) return;
+
+      if (payload.channelId) {
+        void sendToChannel(payload.content, payload.channelId);
+        return;
       }
+
+      void broadcastToGuildChannels(payload.content);
     });
     socket.addEventListener("close", () => {
       console.log("[ws] client disconnected");
